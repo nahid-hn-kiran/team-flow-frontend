@@ -19,7 +19,25 @@ const register = async (payload: IRegisterPayload) => {
   return response.data;
 };
 
+const forgotPassword = async (payload: { email: string }) => {
+  const response = await apiClient.post("/auth/forget-password", payload);
+
+  return response.data;
+};
+
+const resetPassword = async (payload: {
+  email: string;
+  otp: string;
+  newPassword: string;
+}) => {
+  const response = await apiClient.post("/auth/reset-password", payload);
+
+  return response.data;
+};
+
 export const authService = {
   login,
   register,
+  forgotPassword,
+  resetPassword,
 };
