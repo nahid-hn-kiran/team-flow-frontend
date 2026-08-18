@@ -1,0 +1,25 @@
+import { apiClient } from "@/lib/axios/instance";
+
+interface IRegisterPayload {
+  name: string;
+  email: string;
+  password: string;
+}
+
+const login = async (payload: { email: string; password: string }) => {
+  const response = await apiClient.post("/auth/login", payload);
+
+  return response.data;
+};
+
+const register = async (payload: IRegisterPayload) => {
+  console.log(payload);
+  const response = await apiClient.post("/auth/register", payload);
+
+  return response.data;
+};
+
+export const authService = {
+  login,
+  register,
+};
