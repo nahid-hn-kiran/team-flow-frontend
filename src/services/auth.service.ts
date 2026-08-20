@@ -35,9 +35,23 @@ const resetPassword = async (payload: {
   return response.data;
 };
 
+const getCurrentUser = async () => {
+  const response = await apiClient.get("/auth/my-profile");
+
+  return response.data;
+};
+
+const logout = async () => {
+  const response = await apiClient.post("/auth/logout");
+
+  return response.data;
+};
+
 export const authService = {
   login,
   register,
   forgotPassword,
   resetPassword,
+  getCurrentUser,
+  logout,
 };
