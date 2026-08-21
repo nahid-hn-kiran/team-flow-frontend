@@ -38,3 +38,18 @@ export interface WorkspaceListResponse {
   message: string;
   data: WorkspaceMembership[];
 }
+
+export interface WorkspaceMember {
+  id: string;
+  workspaceId: string;
+  userId: string;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}

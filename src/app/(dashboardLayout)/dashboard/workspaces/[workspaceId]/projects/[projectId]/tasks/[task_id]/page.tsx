@@ -30,6 +30,7 @@ import type { Task, TaskStatus } from "@/types/task.types";
 import { EditTaskDialog } from "@/components/modules/tasks/edit-task-dialog";
 import { AssignTaskDialog } from "@/components/modules/tasks/assign-task-dialog";
 import { TaskComments } from "@/components/modules/tasks/task-comments";
+import { TaskActivity } from "@/components/modules/tasks/task-activity";
 
 const statusOptions: TaskStatus[] = ["TODO", "IN_PROGRESS", "COMPLETED"];
 
@@ -367,17 +368,7 @@ export default function TaskPage() {
             </CardHeader>
 
             <CardContent>
-              <div className="flex min-h-[160px] items-center justify-center text-center">
-                <div>
-                  <p className="text-sm font-medium">
-                    Activity will appear here
-                  </p>
-
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    We&apos;ll connect the activity API here.
-                  </p>
-                </div>
-              </div>
+              <TaskActivity workspaceId={workspaceId} taskId={taskId} />
             </CardContent>
           </Card>
         </div>

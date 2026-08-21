@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   BriefcaseBusiness,
   ChevronRight,
-  FolderKanban,
   LayoutDashboard,
   Users,
   Activity,
@@ -28,7 +27,7 @@ const mainNavigation = [
   },
   {
     label: "Workspaces",
-    href: "/workspaces",
+    href: "/dashboard/workspaces",
     icon: BriefcaseBusiness,
   },
 ];
@@ -52,11 +51,6 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
           label: "Overview",
           href: workspaceBasePath,
           icon: LayoutDashboard,
-        },
-        {
-          label: "Projects",
-          href: `${workspaceBasePath}/projects`,
-          icon: FolderKanban,
         },
         {
           label: "Members",

@@ -286,7 +286,7 @@ export default function ProjectPage() {
             {tasks?.data.map((task) => (
               <Link
                 key={task.id}
-                href={`/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}`}
+                href={`/dashboard/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}`}
                 className="group block"
               >
                 <Card className="transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-md">

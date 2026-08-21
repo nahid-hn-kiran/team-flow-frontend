@@ -2,13 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import {
-  Activity,
-  ArrowLeft,
-  FolderKanban,
-  LayoutDashboard,
-  Users,
-} from "lucide-react";
+import { Activity, ArrowLeft, LayoutDashboard, Users } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -22,11 +16,6 @@ const navigationItems = [
     label: "Overview",
     href: "",
     icon: LayoutDashboard,
-  },
-  {
-    label: "Projects",
-    href: "/projects",
-    icon: FolderKanban,
   },
   {
     label: "Members",
@@ -49,14 +38,14 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
   const workspaceId = params.workspaceId;
 
-  const basePath = `/workspaces/${workspaceId}`;
+  const basePath = `/dashboard/workspaces/${workspaceId}`;
 
   return (
     <div className="space-y-6">
       <div className="border-b">
         <div className="flex items-center gap-3 overflow-x-auto pb-3">
           <Link
-            href="/workspaces"
+            href="/dashboard//workspaces"
             className="flex size-9 shrink-0 items-center justify-center rounded-lg border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             title="Back to workspaces"
           >

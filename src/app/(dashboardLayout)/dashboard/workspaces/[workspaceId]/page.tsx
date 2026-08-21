@@ -222,7 +222,7 @@ export default function WorkspacePage() {
             {projects.map((project) => (
               <Link
                 key={project.id}
-                href={`/workspaces/${workspaceId}/projects/${project.id}`}
+                href={`/dashboard/workspaces/${workspaceId}/projects/${project.id}`}
                 className="group"
               >
                 <Card className="h-full transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-md">

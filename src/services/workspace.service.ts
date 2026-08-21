@@ -31,9 +31,48 @@ const getWorkspaceMembers = async (workspaceId: string) => {
   return response.data;
 };
 
+const addWorkspaceMember = async (
+  workspaceId: string,
+  payload: {
+    email: string;
+    role: "MEMBER" | "ADMIN";
+  },
+) => {
+  const response = await apiClient.patch(
+    `/workspaces/${workspaceId}/members`,
+    payload,
+  );
+
+  return response.data;
+};
+
+const updateWorkspaceMemberRole = async (
+  workspaceId: string,
+  memberId: string,
+  role: "MEMBER" | "ADMIN",
+) => {
+  const response = await apiClient.patch(
+    `/workspaces/${workspaceId}/members/${memberId}`,
+    { role },
+  );
+
+  return response.data;
+};
+
+const removeWorkspaceMember = async (workspaceId: string, memberId: string) => {
+  const response = await apiClient.delete(
+    `/workspaces/${workspaceId}/members/${memberId}`,
+  );
+
+  return response.data;
+};
+
 export const workspaceService = {
   getMyWorkspaces,
   getWorkspaceById,
   createWorkspace,
   getWorkspaceMembers,
+  addWorkspaceMember,
+  updateWorkspaceMemberRole,
+  removeWorkspaceMember,
 };

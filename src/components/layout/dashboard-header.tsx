@@ -33,13 +33,6 @@ function getPageInfo(pathname: string) {
     };
   }
 
-  if (pathname.includes("/projects")) {
-    return {
-      title: "Projects",
-      section: "Workspace",
-    };
-  }
-
   if (pathname.includes("/members")) {
     return {
       title: "Members",

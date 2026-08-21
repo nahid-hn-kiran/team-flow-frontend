@@ -118,7 +118,7 @@ export default function WorkspacesPage() {
             return (
               <Link
                 key={membership.id}
-                href={`/workspaces/${workspace.id}`}
+                href={`/dashboard/workspaces/${workspace.id}`}
                 className="group"
               >
                 <Card className="h-full transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-md">
