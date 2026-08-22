@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -17,6 +18,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,12 +29,17 @@ import {
 import { taskService } from "@/services/task.service";
 
 import type { Task, TaskStatus } from "@/types/task.types";
+
 import { EditTaskDialog } from "@/components/modules/tasks/edit-task-dialog";
 import { AssignTaskDialog } from "@/components/modules/tasks/assign-task-dialog";
 import { TaskComments } from "@/components/modules/tasks/task-comments";
 import { TaskActivity } from "@/components/modules/tasks/task-activity";
 
 const statusOptions: TaskStatus[] = ["TODO", "IN_PROGRESS", "COMPLETED"];
+
+const priorityOptions = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
+
+type TaskPriority = (typeof priorityOptions)[number];
 
 const getStatusLabel = (status: TaskStatus) => {
   switch (status) {
@@ -99,6 +106,7 @@ export default function TaskPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdatingPriority, setIsUpdatingPriority] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -164,6 +172,7 @@ export default function TaskPage() {
         return {
           ...currentTask,
           status,
+          updatedAt: new Date().toISOString(),
         };
       });
 
@@ -178,6 +187,53 @@ export default function TaskPage() {
       );
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handlePriorityChange = async (priority: TaskPriority) => {
+    if (!task || task.priority === priority) {
+      return;
+    }
+
+    try {
+      setIsUpdatingPriority(true);
+
+      const response = await taskService.updateTask(
+        workspaceId,
+        projectId,
+        taskId,
+        {
+          priority,
+        },
+      );
+
+      if (!response?.success) {
+        throw new Error(response?.message || "Unable to update task priority.");
+      }
+
+      setTask((currentTask) => {
+        if (!currentTask) {
+          return currentTask;
+        }
+
+        return {
+          ...currentTask,
+          priority,
+          updatedAt: new Date().toISOString(),
+        };
+      });
+
+      toast.success("Task priority updated.");
+    } catch (error) {
+      console.error("Update task priority error:", error);
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to update task priority.",
+      );
+    } finally {
+      setIsUpdatingPriority(false);
     }
   };
 
@@ -209,7 +265,7 @@ export default function TaskPage() {
 
       toast.success("Task deleted.");
 
-      router.push(`/workspaces/${workspaceId}/projects/${projectId}`);
+      router.push(`/dashboard/workspaces/${workspaceId}/projects/${projectId}`);
     } catch (error) {
       console.error("Delete task error:", error);
 
@@ -235,7 +291,9 @@ export default function TaskPage() {
         <Button
           variant="ghost"
           onClick={() =>
-            router.push(`/workspaces/${workspaceId}/projects/${projectId}`)
+            router.push(
+              `/dashboard/workspaces/${workspaceId}/projects/${projectId}`,
+            )
           }
         >
           <ArrowLeft className="size-4" />
@@ -263,7 +321,9 @@ export default function TaskPage() {
       <Button
         variant="ghost"
         onClick={() =>
-          router.push(`/workspaces/${workspaceId}/projects/${projectId}`)
+          router.push(
+            `/dashboard/workspaces/${workspaceId}/projects/${projectId}`,
+          )
         }
       >
         <ArrowLeft className="size-4" />
@@ -308,16 +368,20 @@ export default function TaskPage() {
                       ...currentTask,
                       title: updatedTask.title,
                       description: updatedTask.description,
+                      updatedAt: new Date().toISOString(),
                     };
                   });
                 }}
               />
 
               <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Button variant="ghost" size="icon" disabled={isDeleting}>
-                    <MoreHorizontal className="size-5" />
-                  </Button>
+                <DropdownMenuTrigger
+                  type="button"
+                  className="inline-flex size-9 items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                  disabled={isDeleting}
+                  aria-label="Task actions"
+                >
+                  <MoreHorizontal className="size-5" />
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent align="end">
@@ -354,7 +418,7 @@ export default function TaskPage() {
             </CardContent>
           </Card>
 
-          {/* Comments  */}
+          {/* Comments */}
           <TaskComments
             workspaceId={workspaceId}
             projectId={projectId}
@@ -415,9 +479,31 @@ export default function TaskPage() {
                   Priority
                 </p>
 
-                <Badge variant="secondary" className="mt-2">
-                  {getPriorityLabel(task.priority)}
-                </Badge>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    type="button"
+                    className="mt-2 inline-flex h-auto items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                    disabled={isUpdatingPriority}
+                  >
+                    <Badge variant="secondary" className="cursor-pointer">
+                      {getPriorityLabel(task.priority)}
+                    </Badge>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent align="start">
+                    {priorityOptions.map((priority) => (
+                      <DropdownMenuItem
+                        key={priority}
+                        onClick={() => handlePriorityChange(priority)}
+                        disabled={
+                          isUpdatingPriority || task.priority === priority
+                        }
+                      >
+                        {getPriorityLabel(priority)}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               {/* Assignee */}
@@ -452,7 +538,10 @@ export default function TaskPage() {
                           assignee: {
                             id: member.user.id,
                             name: member.user.name,
+                            email: member.user.email,
                           },
+                          assigneeId: member.user.id,
+                          updatedAt: new Date().toISOString(),
                         };
                       });
                     }}

@@ -1,12 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { LogOut, Settings, User } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +18,10 @@ import { useAuth } from "@/providers/auth-provider";
 import { authService } from "@/services/auth.service";
 
 function getInitials(name: string) {
+  if (!name) {
+    return "U";
+  }
+
   return name
     .trim()
     .split(/\s+/)
@@ -50,7 +52,9 @@ export function UserMenu() {
       toast.success("Logged out successfully.");
 
       router.replace("/auth/login");
-    } catch {
+    } catch (error) {
+      console.error("Logout error:", error);
+
       toast.error("Unable to log out. Please try again.");
     }
   };
@@ -61,12 +65,15 @@ export function UserMenu() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex h-auto items-center gap-3 rounded-lg px-2 py-1.5 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
+      <DropdownMenuTrigger
+        type="button"
+        className="flex h-auto items-center gap-3 rounded-lg px-2 py-1.5 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+      >
         <Avatar className="size-9">
           <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
         </Avatar>
 
-        <div className="hidden text-left sm:block">
+        <div className="hidden min-w-0 text-left sm:block">
           <p className="max-w-32 truncate text-sm font-medium">{user.name}</p>
 
           <p className="text-xs text-muted-foreground">
@@ -75,36 +82,31 @@ export function UserMenu() {
         </div>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" sideOffset={8} className="w-60">
+      <DropdownMenuContent
+        align="end"
+        side="bottom"
+        sideOffset={8}
+        className="w-64"
+      >
         <DropdownMenuLabel>
-          <div className="flex flex-col gap-1">
-            <span className="font-medium">{user.name}</span>
+          <div className="flex items-center gap-3 py-1">
+            <Avatar className="size-10">
+              <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+            </Avatar>
 
-            <span className="truncate text-xs font-normal text-muted-foreground">
-              {user.email}
-            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{user.name}</p>
 
-            <span className="mt-1 text-xs font-normal text-muted-foreground">
-              {formatRole(user.role)}
-            </span>
+              <p className="truncate text-xs font-normal text-muted-foreground">
+                {user.email}
+              </p>
+
+              <p className="mt-1 text-xs font-normal text-muted-foreground">
+                {formatRole(user.role)}
+              </p>
+            </div>
           </div>
         </DropdownMenuLabel>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem>
-          <Link href="/profile">
-            <User />
-            Profile
-          </Link>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem>
-          <Link href="/settings">
-            <Settings />
-            Settings
-          </Link>
-        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 

@@ -32,6 +32,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+} from "@/components/ui/page-state";
+
+import { AppBreadcrumbs } from "@/components/layout/app-breadcrumbs";
+
 import { workspaceService } from "@/services/workspace.service";
 import { WorkspaceMember } from "@/types/workspace.types";
 
@@ -45,6 +53,8 @@ export function WorkspaceMembers({ workspaceId }: WorkspaceMembersProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
+
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"MEMBER" | "ADMIN">("MEMBER");
 
@@ -57,6 +67,7 @@ export function WorkspaceMembers({ workspaceId }: WorkspaceMembersProps) {
   const loadMembers = async () => {
     try {
       setIsLoading(true);
+      setError(null);
 
       const response = await workspaceService.getWorkspaceMembers(workspaceId);
 
@@ -72,11 +83,13 @@ export function WorkspaceMembers({ workspaceId }: WorkspaceMembersProps) {
     } catch (error) {
       console.error("Get workspace members error:", error);
 
-      toast.error(
+      const message =
         error instanceof Error
           ? error.message
-          : "Unable to load workspace members.",
-      );
+          : "Unable to load workspace members.";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -197,30 +210,44 @@ export function WorkspaceMembers({ workspaceId }: WorkspaceMembersProps) {
     }
   };
 
+  /* Loading */
   if (isLoading) {
+    return <LoadingState message="Loading members..." />;
+  }
+
+  /* Error */
+  if (error) {
     return (
-      <div className="flex min-h-[300px] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </div>
+      <ErrorState
+        title="Unable to load members"
+        message={error}
+        onRetry={loadMembers}
+      />
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Breadcrumb */}
+      <AppBreadcrumbs />
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">Workspace</p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-semibold tracking-tight">Members</h1>
 
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-            Members
-          </h1>
+            <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+              {members.length}
+            </span>
+          </div>
 
           <p className="mt-2 text-sm text-muted-foreground">
             Manage the people who have access to this workspace.
           </p>
         </div>
 
+        {/* Add member */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger
             render={
@@ -241,6 +268,7 @@ export function WorkspaceMembers({ workspaceId }: WorkspaceMembersProps) {
             </DialogHeader>
 
             <div className="space-y-4 py-2">
+              {/* Email */}
               <div className="space-y-2">
                 <label htmlFor="member-email" className="text-sm font-medium">
                   Email
@@ -256,6 +284,7 @@ export function WorkspaceMembers({ workspaceId }: WorkspaceMembersProps) {
                 />
               </div>
 
+              {/* Role */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Role</label>
 
@@ -301,75 +330,167 @@ export function WorkspaceMembers({ workspaceId }: WorkspaceMembersProps) {
       </div>
 
       {/* Empty */}
-      {members.length === 0 ? (
-        <Card>
-          <CardContent className="flex min-h-[300px] flex-col items-center justify-center text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-              <Users className="size-6 text-muted-foreground" />
-            </div>
+      {members.length === 0 && (
+        <EmptyState
+          title="No members yet"
+          description="Add people to collaborate on projects and tasks in this workspace."
+          action={
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger
+                render={
+                  <Button>
+                    <Users className="size-4" />
+                    Add member
+                  </Button>
+                }
+              />
 
-            <h2 className="mt-4 text-lg font-semibold">No members</h2>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add workspace member</DialogTitle>
 
-            <p className="mt-2 max-w-md text-sm text-muted-foreground">
-              Add people to collaborate on projects and tasks in this workspace.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
+                  <DialogDescription>
+                    Add an existing TeamFlow user to this workspace.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4 py-2">
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="empty-member-email"
+                      className="text-sm font-medium"
+                    >
+                      Email
+                    </label>
+
+                    <Input
+                      id="empty-member-email"
+                      type="email"
+                      placeholder="user@example.com"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Role</label>
+
+                    <Select
+                      value={role}
+                      onValueChange={(value) =>
+                        setRole(value as "MEMBER" | "ADMIN")
+                      }
+                      disabled={isSubmitting}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+
+                      <SelectContent>
+                        <SelectItem value="MEMBER">Member</SelectItem>
+
+                        <SelectItem value="ADMIN">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsAddDialogOpen(false)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+
+                  <Button
+                    onClick={handleAddMember}
+                    disabled={isSubmitting || !email.trim()}
+                  >
+                    {isSubmitting && (
+                      <Loader2 className="size-4 animate-spin" />
+                    )}
+                    Add member
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          }
+        />
+      )}
+
+      {/* Members */}
+      {members.length > 0 && (
         <Card>
           <CardContent className="p-0">
             <div className="divide-y">
-              {members.map((member) => (
-                <div
-                  key={member.id}
-                  className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="flex min-w-0 items-center gap-4">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted font-medium">
-                      {member.user?.name?.charAt(0)?.toUpperCase() || "U"}
+              {members.map((member) => {
+                const name = member.user?.name || "Unknown user";
+
+                const email = member.user?.email || "No email";
+
+                const initials =
+                  name
+                    .split(" ")
+                    .map((part) => part.charAt(0))
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase() || "U";
+
+                return (
+                  <div
+                    key={member.id}
+                    className="flex flex-col gap-4 p-5 transition-colors hover:bg-muted/30 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    {/* User */}
+                    <div className="flex min-w-0 items-center gap-4">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium">
+                        {initials}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{name}</p>
+
+                        <p className="mt-1 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+                          <Mail className="size-3.5 shrink-0" />
+
+                          {email}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">
-                        {member.user?.name || "Unknown user"}
-                      </p>
+                    {/* Actions */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-medium">
+                        <Shield className="size-3.5" />
 
-                      <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <Mail className="size-3.5" />
+                        {member.role}
+                      </div>
 
-                        {member.user?.email || "No email"}
-                      </p>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={isSubmitting}
+                        onClick={() => setEditingMember(member)}
+                      >
+                        <MoreHorizontal className="size-4" />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        disabled={isSubmitting}
+                        onClick={() => handleRemoveMember(member)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-medium">
-                      <Shield className="size-3.5" />
-
-                      {member.role}
-                    </div>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={isSubmitting}
-                      onClick={() => setEditingMember(member)}
-                    >
-                      <MoreHorizontal className="size-4" />
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive"
-                      disabled={isSubmitting}
-                      onClick={() => handleRemoveMember(member)}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -398,16 +519,20 @@ export function WorkspaceMembers({ workspaceId }: WorkspaceMembersProps) {
 
             <Select
               value={editingMember?.role || "MEMBER"}
-              onValueChange={(value) =>
+              onValueChange={(value) => {
+                if (value !== "MEMBER" && value !== "ADMIN") {
+                  return;
+                }
+
                 setEditingMember((current) =>
                   current
                     ? {
                         ...current,
                         role: value,
                       }
-                    : current,
-                )
-              }
+                    : null,
+                );
+              }}
               disabled={isSubmitting}
             >
               <SelectTrigger>
@@ -416,7 +541,6 @@ export function WorkspaceMembers({ workspaceId }: WorkspaceMembersProps) {
 
               <SelectContent>
                 <SelectItem value="MEMBER">Member</SelectItem>
-
                 <SelectItem value="ADMIN">Admin</SelectItem>
               </SelectContent>
             </Select>

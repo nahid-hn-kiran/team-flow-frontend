@@ -25,6 +25,24 @@ const createWorkspace = async (payload: {
   return response.data;
 };
 
+const updateWorkspace = async (
+  workspaceId: string,
+  payload: {
+    name?: string;
+    description?: string;
+  },
+) => {
+  const response = await apiClient.patch(`/workspaces/${workspaceId}`, payload);
+
+  return response.data;
+};
+
+const deleteWorkspace = async (workspaceId: string) => {
+  const response = await apiClient.patch(`/workspaces/${workspaceId}/delete`);
+
+  return response.data;
+};
+
 const getWorkspaceMembers = async (workspaceId: string) => {
   const response = await apiClient.get(`/workspaces/${workspaceId}/members`);
 
@@ -71,6 +89,8 @@ export const workspaceService = {
   getMyWorkspaces,
   getWorkspaceById,
   createWorkspace,
+  updateWorkspace,
+  deleteWorkspace,
   getWorkspaceMembers,
   addWorkspaceMember,
   updateWorkspaceMemberRole,

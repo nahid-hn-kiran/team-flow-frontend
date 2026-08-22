@@ -77,9 +77,6 @@ const assignTask = async (
   task_id: string,
   assignedTo: string,
 ) => {
-  //   console.log("work", workspaceId);
-  //   console.log("project", projectId);
-  //   console.log("task", task_id);
   const response = await apiClient.patch(
     `/tasks/${workspaceId}/projects/${projectId}/tasks/${task_id}/assign`,
     {

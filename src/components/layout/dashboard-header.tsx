@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, ChevronRight } from "lucide-react";
+import { ChevronRight, Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -19,16 +19,30 @@ function getPageInfo(pathname: string) {
     };
   }
 
-  if (pathname === "/workspaces") {
+  if (pathname === "/dashboard/workspaces") {
     return {
       title: "Workspaces",
       section: "Workspace management",
     };
   }
 
-  if (pathname.match(/^\/workspaces\/[^/]+$/)) {
+  if (pathname.match(/^\/dashboard\/workspaces\/[^/]+$/)) {
     return {
       title: "Workspace",
+      section: "Workspace",
+    };
+  }
+
+  if (pathname.includes("/projects/") && pathname.includes("/tasks/")) {
+    return {
+      title: "Task",
+      section: "Project",
+    };
+  }
+
+  if (pathname.endsWith("/projects")) {
+    return {
+      title: "Projects",
       section: "Workspace",
     };
   }
@@ -43,6 +57,13 @@ function getPageInfo(pathname: string) {
   if (pathname.includes("/activity")) {
     return {
       title: "Activity",
+      section: "Workspace",
+    };
+  }
+
+  if (pathname.includes("/projects/")) {
+    return {
+      title: "Project",
       section: "Workspace",
     };
   }
@@ -75,6 +96,7 @@ export function DashboardHeader({
           <Menu className="size-5" />
         </Button>
 
+        {/* Desktop breadcrumb */}
         <div className="hidden items-center gap-2 text-sm text-muted-foreground sm:flex">
           <Link href="/dashboard" className="hover:text-foreground">
             TeamFlow
@@ -83,8 +105,13 @@ export function DashboardHeader({
           <ChevronRight className="size-3.5" />
 
           <span className="truncate">{pageInfo.section}</span>
+
+          <ChevronRight className="size-3.5" />
+
+          <span className="truncate text-foreground">{pageInfo.title}</span>
         </div>
 
+        {/* Mobile title */}
         <div className="sm:hidden">
           <p className="truncate text-sm font-semibold">{pageInfo.title}</p>
         </div>

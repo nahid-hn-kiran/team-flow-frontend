@@ -1,19 +1,27 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, FolderKanban, Loader2 } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { ArrowRight, FolderKanban } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import { workspaceService } from "@/services/workspace.service";
+import { AppBreadcrumbs } from "@/components/layout/app-breadcrumbs";
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+} from "@/components/ui/page-state";
 
+import { workspaceService } from "@/services/workspace.service";
 import { projectService } from "@/services/project.service";
+
 import { CreateProjectDialog } from "./projects/create-project-dialog";
 import { Project } from "@/types/project.types";
+import { EditWorkspaceDialog } from "@/components/modules/workspace/edit-workspace-dialog";
+import { DeleteWorkspaceButton } from "@/components/modules/workspace/delete-workspace-button";
 
 interface Workspace {
   id: string;
@@ -25,11 +33,11 @@ interface Workspace {
 
 export default function WorkspacePage() {
   const params = useParams<{ workspaceId: string }>();
+  const router = useRouter();
 
   const workspaceId = params.workspaceId;
 
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
-
   const [projects, setProjects] = useState<Project[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -38,7 +46,9 @@ export default function WorkspacePage() {
   const [error, setError] = useState<string | null>(null);
   const [projectsError, setProjectsError] = useState<string | null>(null);
 
-  const loadProjects = async () => {
+  const loadProjects = useCallback(async () => {
+    if (!workspaceId) return;
+
     try {
       setIsProjectsLoading(true);
       setProjectsError(null);
@@ -55,7 +65,7 @@ export default function WorkspacePage() {
     } finally {
       setIsProjectsLoading(false);
     }
-  };
+  }, [workspaceId]);
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -85,51 +95,30 @@ export default function WorkspacePage() {
 
     loadWorkspace();
     loadProjects();
-  }, [workspaceId]);
+  }, [workspaceId, loadProjects]);
 
+  /* Workspace loading */
   if (isLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <LoadingState message="Loading workspace..." />;
   }
 
+  /* Workspace error */
   if (error || !workspace) {
     return (
-      <div className="space-y-4">
-        <Button variant="ghost">
-          <Link href="/workspaces">
-            <ArrowLeft className="size-4" />
-            Back to workspaces
-          </Link>
-        </Button>
-
-        <Card>
-          <CardContent className="flex min-h-[250px] items-center justify-center text-center">
-            <div>
-              <p className="font-medium">Unable to load workspace</p>
-
-              <p className="mt-2 text-sm text-muted-foreground">
-                {error || "Workspace not found."}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <ErrorState
+        title="Unable to load workspace"
+        message={error || "Workspace not found."}
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 
   return (
     <div className="space-y-8">
-      {/* Back */}
-      <Button variant="ghost">
-        <Link href="/workspaces">
-          <ArrowLeft className="size-4" />
-          Back to workspaces
-        </Link>
-      </Button>
+      {/* Breadcrumbs */}
+      <AppBreadcrumbs workspaceName={workspace.name} />
 
+      {/* Workspace header */}
       {/* Workspace header */}
       <Card>
         <CardContent className="p-6">
@@ -149,15 +138,49 @@ export default function WorkspacePage() {
                 </p>
               </div>
             </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <EditWorkspaceDialog
+                workspaceId={workspace.id}
+                name={workspace.name}
+                description={workspace.description}
+                onUpdated={async () => {
+                  const response = await workspaceService.getWorkspaceById(
+                    workspace.id,
+                  );
+
+                  if (response?.success) {
+                    setWorkspace(response.data);
+                  }
+                }}
+              />
+
+              <DeleteWorkspaceButton
+                workspaceId={workspace.id}
+                workspaceName={workspace.name}
+                onDeleted={() => {
+                  router.push("/dashboard/workspaces");
+                }}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Projects */}
       <section className="space-y-5">
-        <div className="flex items-end justify-between gap-4">
+        {/* Section header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-xl font-semibold">Projects</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-semibold">Projects</h2>
+
+              {!isProjectsLoading && !projectsError && (
+                <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                  {projects.length}
+                </span>
+              )}
+            </div>
 
             <p className="mt-1 text-sm text-muted-foreground">
               Projects inside this workspace.
@@ -170,53 +193,33 @@ export default function WorkspacePage() {
           />
         </div>
 
-        {isProjectsLoading && (
-          <Card>
-            <CardContent className="flex min-h-[220px] items-center justify-center">
-              <Loader2 className="size-6 animate-spin text-muted-foreground" />
-            </CardContent>
-          </Card>
-        )}
+        {/* Loading */}
+        {isProjectsLoading && <LoadingState message="Loading projects..." />}
 
+        {/* Error */}
         {!isProjectsLoading && projectsError && (
-          <Card>
-            <CardContent className="flex min-h-[220px] flex-col items-center justify-center text-center">
-              <p className="font-medium">Unable to load projects</p>
-
-              <p className="mt-2 text-sm text-muted-foreground">
-                {projectsError}
-              </p>
-
-              <Button variant="outline" className="mt-4" onClick={loadProjects}>
-                Try again
-              </Button>
-            </CardContent>
-          </Card>
+          <ErrorState
+            title="Unable to load projects"
+            message={projectsError}
+            onRetry={loadProjects}
+          />
         )}
 
+        {/* Empty */}
         {!isProjectsLoading && !projectsError && projects.length === 0 && (
-          <Card>
-            <CardContent className="flex min-h-[280px] flex-col items-center justify-center text-center">
-              <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
-                <FolderKanban className="size-6 text-muted-foreground" />
-              </div>
-
-              <h3 className="mt-4 font-semibold">No projects yet</h3>
-
-              <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                Create your first project inside this workspace.
-              </p>
-
-              <div className="mt-5">
-                <CreateProjectDialog
-                  workspaceId={workspaceId}
-                  onCreated={loadProjects}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <EmptyState
+            title="No projects yet"
+            description="Create your first project inside this workspace to start organizing your work."
+            action={
+              <CreateProjectDialog
+                workspaceId={workspaceId}
+                onCreated={loadProjects}
+              />
+            }
+          />
         )}
 
+        {/* Projects */}
         {!isProjectsLoading && !projectsError && projects.length > 0 && (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {projects.map((project) => (

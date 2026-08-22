@@ -13,7 +13,10 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-72 p-0">
-        <AppSidebar mobile onClose={() => onOpenChange(false)} />
+        <AppSidebar
+          mobileOpen={true}
+          onCloseMobile={() => onOpenChange(false)}
+        />
       </SheetContent>
     </Sheet>
   );

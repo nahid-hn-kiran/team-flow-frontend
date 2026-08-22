@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 import { projectService } from "@/services/project.service";
@@ -24,6 +24,8 @@ import { taskService } from "@/services/task.service";
 import type { Task, TaskListResponse } from "@/types/task.types";
 
 import { CreateTaskDialog } from "./create-task-dialog";
+import { EditProjectDialog } from "@/components/modules/project/edit-project-dialog";
+import { DeleteProjectDialog } from "@/components/modules/project/delete-project-dialog";
 
 interface Project {
   id: string;
@@ -145,6 +147,7 @@ export default function ProjectPage() {
     loadTasks();
   }, [workspaceId, projectId]);
 
+  /* Project loading */
   if (isProjectLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -153,11 +156,12 @@ export default function ProjectPage() {
     );
   }
 
+  /* Project error */
   if (projectError || !project) {
     return (
       <div className="space-y-5">
         <Button variant="ghost">
-          <Link href={`/workspaces/${workspaceId}`}>
+          <Link href={`/dashboard/workspaces/${workspaceId}`}>
             <ArrowLeft className="size-4" />
             Back to workspace
           </Link>
@@ -180,9 +184,34 @@ export default function ProjectPage() {
 
   return (
     <div className="space-y-8">
+      {/* Breadcrumb */}
+      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        <Link
+          href="/dashboard/workspaces"
+          className="transition-colors hover:text-foreground"
+        >
+          Workspaces
+        </Link>
+
+        <span>/</span>
+
+        <Link
+          href={`/dashboard/workspaces/${workspaceId}`}
+          className="max-w-[200px] truncate transition-colors hover:text-foreground"
+        >
+          Workspace
+        </Link>
+
+        <span>/</span>
+
+        <span className="max-w-[250px] truncate font-medium text-foreground">
+          {project.name}
+        </span>
+      </div>
+
       {/* Back */}
       <Button variant="ghost">
-        <Link href={`/workspaces/${workspaceId}`}>
+        <Link href={`/dashboard/workspaces/${workspaceId}`}>
           <ArrowLeft className="size-4" />
           Back to workspace
         </Link>
@@ -208,20 +237,52 @@ export default function ProjectPage() {
               </div>
             </div>
 
-            <CreateTaskDialog
-              workspaceId={workspaceId}
-              projectId={projectId}
-              onCreated={loadTasks}
-            />
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <EditProjectDialog
+                workspaceId={workspaceId}
+                projectId={projectId}
+                name={project.name}
+                description={project.description}
+                onUpdated={(updatedProject) => {
+                  setProject((currentProject) => {
+                    if (!currentProject) {
+                      return currentProject;
+                    }
+
+                    return {
+                      ...currentProject,
+                      name: updatedProject.name,
+                      description: updatedProject.description,
+                      updatedAt: new Date().toISOString(),
+                    };
+                  });
+                }}
+              />
+
+              <DeleteProjectDialog
+                workspaceId={workspaceId}
+                projectId={projectId}
+                projectName={project.name}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Tasks */}
       <section className="space-y-5">
+        {/* Section header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-xl font-semibold">Tasks</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-semibold">Tasks</h2>
+
+              {!isTasksLoading && !tasksError && (
+                <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                  {tasks?.data?.length ?? 0}
+                </span>
+              )}
+            </div>
 
             <p className="mt-1 text-sm text-muted-foreground">
               Manage the work that needs to be completed for this project.
@@ -234,6 +295,7 @@ export default function ProjectPage() {
             onCreated={loadTasks}
           />
         </div>
+
         {/* Loading */}
         {isTasksLoading && (
           <Card>
@@ -242,6 +304,7 @@ export default function ProjectPage() {
             </CardContent>
           </Card>
         )}
+
         {/* Error */}
         {!isTasksLoading && tasksError && (
           <Card>
@@ -256,6 +319,7 @@ export default function ProjectPage() {
             </CardContent>
           </Card>
         )}
+
         {/* Empty */}
         {!isTasksLoading && !tasksError && tasks?.data.length === 0 && (
           <Card>
@@ -280,6 +344,7 @@ export default function ProjectPage() {
             </CardContent>
           </Card>
         )}
+
         {/* Task list */}
         {!isTasksLoading && !tasksError && (tasks?.data?.length ?? 0) > 0 && (
           <div className="space-y-3">
