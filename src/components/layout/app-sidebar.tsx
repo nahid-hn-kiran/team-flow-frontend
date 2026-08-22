@@ -236,7 +236,7 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
             </p>
 
             <Link
-              href="/settings"
+              href="/dashboard/settings"
               onClick={onCloseMobile}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
