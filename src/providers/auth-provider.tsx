@@ -31,14 +31,11 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<IAuthUser | null>(null);
-
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshUser = useCallback(async () => {
     try {
       const response = await authService.getCurrentUser();
-
-      console.log("AUTH PROVIDER RESPONSE:", response);
 
       if (response?.success && response?.data) {
         setUser(response.data);
@@ -46,9 +43,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(null);
       }
     } catch (error) {
-      console.error("Failed to get current user:", error);
-
       setUser(null);
+
+      if (process.env.NODE_ENV === "development") {
+        console.debug("No authenticated user found.");
+      }
     }
   }, []);
 
@@ -68,13 +67,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } else {
           setUser(null);
         }
-      } catch (error) {
+      } catch {
         if (cancelled) {
           return;
         }
-
-        console.error("Authentication initialization failed:", error);
-
         setUser(null);
       } finally {
         if (!cancelled) {
