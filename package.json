@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "bun --bun next dev",
-    "build": "bun --bun next build",
+    "dev": "npm run next dev",
+    "build": "npm run next build",
     "start": "npm run next start",
     "lint": "eslint"
   },
