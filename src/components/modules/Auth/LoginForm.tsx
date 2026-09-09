@@ -46,11 +46,11 @@ export function LoginForm() {
 
       switch (role) {
         case "SUPER_ADMIN":
-          router.push("/super-admin");
+          router.push("/admin/dashboard");
           break;
 
         case "ADMIN":
-          router.push("/admin");
+          router.push("/admin/dashboard");
           break;
 
         default:
